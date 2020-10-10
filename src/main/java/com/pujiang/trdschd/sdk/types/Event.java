@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Data
 @SuperBuilder
@@ -17,9 +18,11 @@ public class Event implements Serializable {
 
   private String id;
   private String topicId;
+  private String topicCode;
   private String producerId;
   private EventDataType dataType;
   private String data;
   private String additional;
+  private LocalDateTime ctime;
 
 }
