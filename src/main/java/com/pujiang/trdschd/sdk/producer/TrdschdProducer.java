@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.pujiang.trdschd.sdk.Config;
+import com.pujiang.trdschd.sdk.types.Event;
 import com.pujiang.trdschd.sdk.types.Topic;
 import com.pujiang.trdschd.sdk.types.thr.TrdschdException;
 import com.pujiang.trdschd.sdk.types.trdschd.TrdschdResp;
@@ -51,6 +52,18 @@ public class TrdschdProducer {
     topic.setProducerId(this.config.getProducerId());
     String data = JSON.toJSONString(topic, this.serializeConfig);
     Http http = this.config.http("/api/topic/modify")
+      .method(HttpMethod.POST)
+      .raw(data, "application/json");
+    TrdschdResp<Void> resp = this.call(http, TypeBuilder.with(TrdschdResp.class).type(Void.class).build());
+    if (resp.getErr() == 0)
+      return this;
+    throw new TrdschdException(resp.getMsg());
+  }
+
+  public TrdschdProducer sendEvent(Event event) throws TrdschdException {
+    event.setProducerId(this.config.getProducerId());
+    String data = JSON.toJSONString(event, this.serializeConfig);
+    Http http = this.config.http("/api/event/publish")
       .method(HttpMethod.POST)
       .raw(data, "application/json");
     TrdschdResp<Void> resp = this.call(http, TypeBuilder.with(TrdschdResp.class).type(Void.class).build());
