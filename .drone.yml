@@ -1,0 +1,69 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+
+---
+kind: pipeline
+type: docker
+name: deploy
+
+steps:
+  - name: package
+    image: maven:3.6-alpine
+    commands:
+      - mvn clean package -Dmaven.test.skip=true
+    volumes:
+      - name: m2
+        path: /root/.m2
+
+  - name: sync_push
+    image: alpine/git:1.0.7
+    environment:
+      REPO_REMOTE: https://github.com/fewensa/trdschd-sdk.git
+      GITHUB_TOKEN:
+        from_secret: GITHUB_TOKEN
+    when:
+      event:
+        - push
+    commands:
+      - echo "https://$(echo $GITHUB_TOKEN)@github.com" > /root/.git-credentials
+      - git config --global credential.helper store
+      - git config --global user.email fewensa@protonmail.com
+      - git config --global user.name fewensa
+      - git remote add github $REPO_REMOTE
+      - git push github $DRONE_BRANCH
+
+
+  - name: sync_tag
+    image: alpine/git:1.0.7
+    environment:
+      REPO_REMOTE: https://github.com/fewensa/trdschd-sdk.git
+      GITHUB_TOKEN:
+        from_secret: GITHUB_TOKEN
+    when:
+      event:
+        - tag
+    commands:
+      - echo "https://$(echo $GITHUB_TOKEN)@github.com" > /root/.git-credentials
+      - git config --global credential.helper store
+      - git config --global user.email fewensa@protonmail.com
+      - git config --global user.name fewensa
+      - git remote add github $REPO_REMOTE
+      - git fetch origin
+      - git push github $DRONE_TAG
+
+volumes:
+  - name: m2
+    host:
+      path: /data/mount/m2
+  - name: docker
+    host:
+      path: /var/run/docker.sock
+
+
+#trigger:
+#  branch:
+#    - test
+##    - prod
